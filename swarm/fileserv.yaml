@@ -1,0 +1,32 @@
+# docker stack deploy --compose-file=./swarm/fileserv.yaml fileserv
+---
+version: '3.7'
+networks:
+  fileserv:
+    driver: overlay
+    name: fileservnet
+
+volumes:
+    fileservvol: {}
+
+services:
+  fileserv:
+    image: newa/fileserv:1.0
+    environment:
+      - "APP_PORT=:80"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: fileservnet
+        traefik.http.routers.fileserv.service: fileserv
+        traefik.http.services.filserv.loadbalancer.server.port: "80"
+        traefik.http.routers.fileserv.rule: Host(`fileserv.domain.tld`)
+        traefik.http.routers.fileserv.entrypoints: websecure
+        traefik.http.routers.fileserv.tls: "true"
+        traefik.http.routers.fileserv.tls.certresolver: "default"
+    volumes:
+      - fileservvol:/tmp
+    networks:
+      - fileservnet
